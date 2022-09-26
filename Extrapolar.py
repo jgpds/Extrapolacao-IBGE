@@ -2,16 +2,11 @@ import pandas as pd
 import numpy as np
 import os
 
-cwd = os.getcwd()
-print(cwd)
-data_original = pd.read_excel(cwd+"./Planilhas/q_xe_x2.xlsx")
-
-w = 115
-fa = 100
 
 
 
-def extrapolarTabua(fa, df, w, f_x=0.5):
+
+def extrapolarTabua(fa, df, w, f_x):
     feature_list = ['x', 'q_x', 'd_x','l_x','L_x','T_x', 'e_x', 'u_x', 'm_x','p_x']
 
     df = pd.DataFrame(0, index= np.arange(start=0, stop=w+1), columns=feature_list)
@@ -72,58 +67,66 @@ def extrapolarTabua(fa, df, w, f_x=0.5):
     return df
 
 
+cwd = os.getcwd()
+print(cwd)
+data_original = pd.read_excel(cwd+"./Planilhas/q_xe_x2.xlsx")
+
+w = 115
+fa = 100
 
 
-df = extrapolarTabua(fa, data_original, w)
 
-print(f"e_x data extrapolada: {df.at[80, 'e_x']}")
-print(f"e_x data original: {data_original.at[80, 'e_x']}")
-diferenca = df.at[80, 'e_x'] - data_original.at[80, 'e_x']
-print(diferenca)
-achou = False
-while achou == False:
-    print(f"FA -> {fa}")
-    if diferenca > 0:
-        fa += 1
-        df_aux = extrapolarTabua(fa, data_original, w, f_x=0.5)
-        diff = df_aux.at[80, 'e_x'] - data_original.at[80, 'e_x']
-        if abs(diff) < abs(diferenca):
-            diferenca = diff
-            df = df_aux
-        elif abs(diff) > abs(diferenca):
-            achou = True
-            fa -= 1
-    elif diferenca < 0:
-        fa -= 1
-        df_aux = extrapolarTabua(fa, data_original, w, f_x=0.5)
-        diff = df_aux.at[80, 'e_x'] - data_original.at[80, 'e_x']
-        if abs(diff) < abs(diferenca):
-            diferenca = diff
-            df = df_aux
-        elif abs(diff) > abs(diferenca):
-            achou = True
+def calcular(data_original, fa, w, f_x):
+    df = extrapolarTabua(data_original, w, fa, f_x)
+
+    print(f"e_x data extrapolada: {df.at[80, 'e_x']}")
+    print(f"e_x data original: {data_original.at[80, 'e_x']}")
+    diferenca = df.at[80, 'e_x'] - data_original.at[80, 'e_x']
+    print(diferenca)
+    achou = False
+    while achou == False:
+        print(f"FA -> {fa}")
+        if diferenca > 0:
             fa += 1
+            df_aux = extrapolarTabua(fa, data_original, w, f_x)
+            diff = df_aux.at[80, 'e_x'] - data_original.at[80, 'e_x']
+            if abs(diff) < abs(diferenca):
+                diferenca = diff
+                df = df_aux
+            elif abs(diff) > abs(diferenca):
+                achou = True
+                fa -= 1
+        elif diferenca < 0:
+            fa -= 1
+            df_aux = extrapolarTabua(fa, data_original, w, f_x)
+            diff = df_aux.at[80, 'e_x'] - data_original.at[80, 'e_x']
+            if abs(diff) < abs(diferenca):
+                diferenca = diff
+                df = df_aux
+            elif abs(diff) > abs(diferenca):
+                achou = True
+                fa += 1
 
-i = 0
-while i < w:
-    x = df.at[i, 'q_x'].round(6)
-    # if i == 109:
-    #     print(x)
-    #     print(x >= 1)
-    if x == 1:
-        print(df[107:115])
-        print(x)
-        print(i)
-        #print(df[:i])
-        break
-    i += 1
-print(fa)
-df = df[0:i+1]
-print(df)
-arquivo = "output2.xlsx"
-with pd.ExcelWriter(arquivo) as writer:
-    data_original.to_excel(writer, sheet_name='Planilha')
-    df.to_excel(writer, sheet_name='Planilha Extrapolada')
-os.system(f'cmd /c {arquivo}')
-pd.reset_option('display.float_format')
+    i = 0
+    while i < w:
+        x = df.at[i, 'q_x'].round(6)
+        # if i == 109:
+        #     print(x)
+        #     print(x >= 1)
+        if x == 1:
+            print(df[107:115])
+            print(x)
+            print(i)
+            #print(df[:i])
+            break
+        i += 1
+    print(fa)
+    df = df[0:i+1]
+    print(df)
+    arquivo = "output2.xlsx"
+    with pd.ExcelWriter(arquivo) as writer:
+        data_original.to_excel(writer, sheet_name='Planilha')
+        df.to_excel(writer, sheet_name='Planilha Extrapolada')
+    os.system(f'cmd /c {arquivo}')
+    pd.reset_option('display.float_format')
 
